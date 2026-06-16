@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BINGO DASHBOARD</title>
+    <title>X LIVE BINGO DASHBOARD</title>
     <style>
         :root {
             --bg-main: #0c0d19;
@@ -34,9 +34,8 @@
 
         .main-dashboard { display: flex; gap: 20px; flex: 1; align-items: flex-start; }
 
-        .overlay-container { flex: 0 0 320px; background: rgba(12, 13, 25, 0.8); border: 2px solid var(--border-pink); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 15px rgba(255, 74, 141, 0.1); min-height: 380px; }
+        .overlay-container { flex: 0 0 320px; background: rgba(12, 13, 25, 0.8); border: 2px solid var(--border-pink); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 15px rgba(255, 74, 141, 0.1); min-height: 420px; }
         
-        /* 축하 효과 컨테이너 */
         #confetti-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 10; }
         .confetti { position: absolute; width: 8px; height: 8px; background-color: var(--accent-yellow); animation: confetti-fall 1s ease-out forwards; }
         @keyframes confetti-fall { 0% { transform: translateY(-10px) rotate(0deg); opacity: 1; } 100% { transform: translateY(300px) rotate(720deg); opacity: 0; } }
@@ -55,19 +54,26 @@
         .bingo-cell.line-completed { background: rgba(255, 174, 0, 0.25) !important; border-color: var(--accent-yellow) !important; box-shadow: 0 0 10px rgba(255, 174, 0, 0.4), inset 0 0 8px rgba(255, 174, 0, 0.3) !important; }
         .bingo-cell.line-completed .cell-input { color: var(--accent-yellow) !important; text-shadow: 0 0 10px rgba(255, 174, 0, 0.9) !important; }
 
-        .summary-zone { display: flex; gap: 6px; }
+        .summary-zone { display: flex; gap: 6px; margin-bottom: 10px; }
         .sum-box { flex: 1; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 6px; text-align: center; }
         .sum-box .title { font-size: 9px; color: var(--text-muted); font-weight: bold; }
         .sum-box .value { font-size: 13px; font-weight: 900; }
         .bingo-count-active { color: var(--accent-yellow); text-shadow: 0 0 6px rgba(255, 174, 0, 0.4); }
 
+        /* 왼쪽 패널용 치킨 박스 */
+        .team-chicken-box { border: 1px solid rgba(255, 174, 0, 0.3); border-radius: 4px; padding: 8px; text-align: center; background: rgba(255, 174, 0, 0.05); }
+        .team-chicken-label { color: var(--accent-yellow); font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .team-chicken-value { color: var(--accent-yellow); font-size: 16px; font-weight: 900; margin-top: 2px; }
+
         .control-container { flex: 1; background: var(--panel-bg); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
         .section-title { font-size: 13px; font-weight: bold; color: var(--accent-blue); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
         .ctrl-card { background: rgba(0, 0, 0, 0.2); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 12px; }
+        
         .flex-row { display: flex; gap: 8px; margin-top: 8px; }
-        .btn { flex: 1; background: #20233b; border: 1px solid #383c5e; color: white; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .btn { flex: 1; background: #20233b; border: 1px solid #383c5e; color: white; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;}
+        .btn:hover { border-color: var(--accent-blue); }
         .btn-primary { background: var(--border-pink); border-color: var(--border-pink); }
-        .random-pool-display { background: #111224; border: 1px solid #252846; border-radius: 6px; padding: 10px; font-size: 12px; color: #ffcc00; word-break: break-all; font-weight: bold; max-height: 120px; overflow-y: auto; }
+        .random-pool-display { background: #111224; border: 1px solid #252846; border-radius: 6px; padding: 10px; font-size: 12px; color: #ffcc00; word-break: break-all; font-weight: bold; max-height: 120px; overflow-y: auto; margin-bottom: 8px;}
         .tip-box { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-top: 5px; }
     </style>
 </head>
@@ -86,9 +92,9 @@
         </div>
     </div>
 	<div class="manager-badge" style="background: rgba(255, 174, 0, 0.1); border: 1px solid var(--accent-yellow); color: var(--accent-black); padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 6px; width: fit-content; margin-bottom: 5px;">
-         <div class="manager-badge">📣 스트리머 전용</div>
-         </div>
-         </br>
+	 <div class="manager-badge">📣 스트리머 전용</div>
+	 </div>
+	</br>
     <div class="main-dashboard">
         <div class="overlay-container fade-in" id="bingo-overlay">
             <div id="confetti-container"></div>
@@ -97,6 +103,7 @@
                 <span class="status-badge">LIVE MATCHING</span>
             </div>
             <div class="bingo-grid" id="grid-element"></div>
+            
             <div class="summary-zone">
                 <div class="sum-box">
                     <div class="title">✅ 체크 칸 수</div>
@@ -107,12 +114,26 @@
                     <div class="value bingo-count-active" id="bingo-lines-count" data-prev="0">0 BINGO</div>
                 </div>
             </div>
-        </div>
 
+            <div class="team-chicken-box">
+                <div class="team-chicken-label">🍗 팀 누적 치킨</div>
+                <div class="team-chicken-value">0회</div>
+            </div>
+        </div>
+	
         <div class="control-container">
-			 <div class="manager-badge" style="background: rgba(255, 174, 0, 0.1); border: 1px solid var(--accent-yellow); color: var(--accent-yellow); padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 6px; width: fit-content; margin-bottom: 5px;">
-         <div class="manager-badge">📣 매니저 전용</div>
-         </div>
+			<div class="manager-badge" style="background: rgba(255, 174, 0, 0.1); border: 1px solid var(--accent-yellow); color: var(--accent-yellow); padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 6px; width: fit-content; margin-bottom: 5px;">
+		 <div class="manager-badge">📣 매니저 전용</div>
+		 </div>
+            <div>
+                <div class="section-title">🍗 실시간 치킨 횟수 입력</div>
+                <div class="ctrl-card" style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                    <button class="btn" style="width: 40px; flex: none;" onclick="updateChickenCount(-1)">-</button>
+                    <div id="chicken-count" style="font-size: 24px; font-weight: 900; color: var(--accent-yellow); min-width: 80px; text-align: center;">0회</div>
+                    <button class="btn" style="width: 40px; flex: none;" onclick="updateChickenCount(1)">+</button>
+                </div>
+            </div>
+
             <div>
                 <div class="section-title" id="system-title-node">🎲 랜덤 숫자 조합표 시스템 (1~100 지정 완료)</div>
                 <div class="ctrl-card">
@@ -124,16 +145,15 @@
                     </div>
                 </div>
             </div>
+            
             <div>
                 <div class="section-title">⚙️ 보드 관리 콘솔</div>
                 <div class="ctrl-card">
-				<p class="tip-box" style="margin-bottom: 10px;">
-                        💡 <strong>실시간 마우스 인터랙션 안내:</strong><br>
-                        * 칸을 <strong>한 번 클릭</strong>하면 핑크색 색상이 활성화(체크 토글)됩니다.<br>
-                        * 칸을 <strong>두 번 빠르게 클릭(더블클릭)</strong>하면 파란색 편집창으로 변경되며 숫자를 직접 바꿀 수 있습니다.<br>
-                        (글자 입력을 마치고 <u>엔터(Enter)를 누르거나 다른 곳을 클릭</u>하면 변경이 완료됩니다.)
+                    <p class="tip-box" style="margin-bottom: 10px;">
+                        💡 <strong>마우스 인터랙션:</strong><br>
+                        * <strong>클릭:</strong> 체크 토글<br>
+                        * <strong>더블 클릭:</strong> 텍스트 편집
                     </p>
-                    <p class="tip-box">💡 한 번 클릭: 체크 / 더블 클릭: 텍스트 편집</p>
                     <div class="flex-row">
                         <button class="btn" onclick="resetChecks()">🧹 체크 초기화</button>
                         <button class="btn" style="border-color: #ff4a8d; color:#ff4a8d;" onclick="clearAllData()">⚠️ 전체 리셋</button>
@@ -145,9 +165,16 @@
 
     <script>
         let currentMode = '4x4', gridSize = 4, cellData = [], generatedPool = [], clickTimer = null;
+        let chickenCount = 0;
         const alphabetList = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V/W','X','Y','Z'];
 
         window.onload = () => switchMode('4x4');
+
+        function updateChickenCount(delta) {
+            chickenCount = Math.max(0, chickenCount + delta);
+            document.getElementById('chicken-count').innerText = `${chickenCount}회`;
+            document.querySelector('.team-chicken-value').innerText = `${chickenCount}회`;
+        }
 
         function switchMode(mode) {
             currentMode = mode;
@@ -156,7 +183,6 @@
             });
             gridSize = (mode === '4x4') ? 4 : (mode === 'alphabet' ? 5 : parseInt(mode[0]));
             document.getElementById('current-board-title').innerText = `${mode.toUpperCase()} BINGO`;
-            document.getElementById('system-title-node').innerText = (mode === 'alphabet') ? "Test" : "🎲 랜덤 숫자 조합표 시스템";
             document.getElementById('grid-element').style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
             clearAllData();
             generateRandomPool();
@@ -201,10 +227,7 @@
             
             if(updateDOM) {
                 const prev = parseInt(document.getElementById('bingo-lines-count').dataset.prev);
-                // 라인이 완성될 때마다 (0에서 1이 될 때 포함) 축하 효과 발생
-                if(bingoLines > prev) {
-                    triggerConfetti();
-                }
+                if(bingoLines > prev) triggerConfetti();
                 document.getElementById('bingo-lines-count').dataset.prev = bingoLines;
                 document.getElementById('checked-cells-count').innerText = `${cellData.filter(c=>c.checked).length} / ${gridSize*gridSize}`;
                 document.getElementById('bingo-lines-count').innerText = `${bingoLines} BINGO`;
