@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>X LIVE BINGO DASHBOARD</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root {
             --bg-main: #0c0d19;
@@ -339,14 +340,10 @@
 
     <div class="header-container">
         <div class="title-group">
-	
             <div class="tag">TOOL BOX BINGO SYSTEM</div>
-            <h1>🎯 봉순이 빙고판</h1>
+            <h1>🎯 스트리머 맞춤형 실시간 빙고판</h1>
         </div>
         
-		
-		
-		
         <div class="mode-tabs">
             <button class="tab-btn active" onclick="switchMode('4x4')">4X4 빙고</button>
             <button class="tab-btn" onclick="switchMode('5x5')">5X5 빙고</button>
@@ -354,12 +351,12 @@
             <button class="tab-btn" onclick="switchMode('alphabet')">알파벳(5X5)</button>
         </div>
     </div>
-	<div class="manager-badge" style="background: rgba(255, 174, 0, 0.1); border: 1px solid var(--accent-yellow); color: var(--accent-black); padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 6px; width: fit-content; margin-bottom: 5px;">
-		 <div class="manager-badge">📣 스트리머 전용</div>
-		 </div>
-		 </br>
+    <div class="manager-badge" style="background: rgba(255, 174, 0, 0.1); border: 1px solid var(--accent-yellow); color: var(--accent-black); padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 6px; width: fit-content; margin-bottom: 5px;">
+         <div class="manager-badge">📣 스트리머 전용</div>
+         </div>
+         </br>
     <div class="main-dashboard">
-        	
+        
         <div class="overlay-container fade-in" id="bingo-overlay">
             <div class="overlay-header">
                 <span class="overlay-label" id="current-board-title">4X4 BINGO OVERLAY</span>
@@ -381,9 +378,9 @@
         </div>
 
         <div class="control-container">
-		<div class="manager-badge" style="background: rgba(255, 174, 0, 0.1); border: 1px solid var(--accent-yellow); color: var(--accent-yellow); padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 6px; width: fit-content; margin-bottom: 5px;">
-		 <div class="manager-badge">📣 매니저 전용</div>
-		 </div>
+        <div class="manager-badge" style="background: rgba(255, 174, 0, 0.1); border: 1px solid var(--accent-yellow); color: var(--accent-yellow); padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 6px; width: fit-content; margin-bottom: 5px;">
+         <div class="manager-badge">📣 매니저 전용</div>
+         </div>
             <div>
                 <div class="section-title" id="system-title-node">🎲 랜덤 숫자 조합표 시스템 (1~100 지정 완료)</div>
                 <div class="ctrl-card">
@@ -425,7 +422,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 
     <script>
@@ -434,6 +430,7 @@
         let cellData = []; 
         let generatedPool = [];
         let clickTimer = null;
+        let lastBingoCount = 0; // 축포 트리거를 위해 이전 빙고 상태 저장
 
         const alphabetList = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V/W','X','Y','Z'];
 
@@ -478,7 +475,6 @@
             if(mode === 'alphabet') { 
                 gridSize = 5; 
                 titleEl.innerText = "5X5 ALPHABET BINGO";
-                // [변경] 알파벳(5X5) 모드 진입 시 타이틀을 'Test'로 일괄 변경
                 systemTitleEl.innerText = "Test";
                 systemTipEl.innerText = "※ 알파벳 리스트 순서를 무작위로 셔플하여 랜덤 배치 보드를 구성합니다.";
             }
@@ -486,12 +482,14 @@
             const gridEl = document.getElementById('grid-element');
             gridEl.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
             
+            lastBingoCount = 0; // 모드 변경 시 초기화
             clearAllData();
             generateRandomPool();
         }
 
         function clearAllData() {
             cellData = [];
+            lastBingoCount = 0;
             const totalCells = gridSize * gridSize;
 
             for(let i = 0; i < totalCells; i++) {
@@ -514,6 +512,7 @@
                 cell.checked = false;
                 cell.isBingoLine = false;
             });
+            lastBingoCount = 0;
             renderBoard();
         }
 
@@ -596,52 +595,41 @@
             cellData.forEach(c => c.isBingoLine = false);
             let bingoLines = 0;
             
-            // 가로 검사
+            // 가로, 세로, 대각선 검사 로직 동일...
             for(let r = 0; r < gridSize; r++) {
                 let rowMatch = true;
                 for(let c = 0; c < gridSize; c++) {
                     if(!cellData[r * gridSize + c].checked) { rowMatch = false; break; }
                 }
-                if(rowMatch) {
-                    bingoLines++;
-                    for(let c = 0; c < gridSize; c++) cellData[r * gridSize + c].isBingoLine = true;
-                }
+                if(rowMatch) { bingoLines++; for(let c = 0; c < gridSize; c++) cellData[r * gridSize + c].isBingoLine = true; }
             }
-
-            // 세로 검사
             for(let c = 0; c < gridSize; c++) {
                 let colMatch = true;
                 for(let r = 0; r < gridSize; r++) {
                     if(!cellData[r * gridSize + c].checked) { colMatch = false; break; }
                 }
-                if(colMatch) {
-                    bingoLines++;
-                    for(let r = 0; r < gridSize; r++) cellData[r * gridSize + c].isBingoLine = true;
-                }
+                if(colMatch) { bingoLines++; for(let r = 0; r < gridSize; r++) cellData[r * gridSize + c].isBingoLine = true; }
             }
-
-            // 우하향 대각선
             let diag1Match = true;
-            for(let i = 0; i < gridSize; i++) {
-                if(!cellData[i * gridSize + i].checked) { diag1Match = false; break; }
-            }
-            if(diag1Match) {
-                bingoLines++;
-                for(let i = 0; i < gridSize; i++) cellData[i * gridSize + i].isBingoLine = true;
-            }
-
-            // 우상향 대각선
+            for(let i = 0; i < gridSize; i++) { if(!cellData[i * gridSize + i].checked) { diag1Match = false; break; } }
+            if(diag1Match) { bingoLines++; for(let i = 0; i < gridSize; i++) cellData[i * gridSize + i].isBingoLine = true; }
             let diag2Match = true;
-            for(let i = 0; i < gridSize; i++) {
-                if(!cellData[i * gridSize + (gridSize - 1 - i)].checked) { diag2Match = false; break; }
-            }
-            if(diag2Match) {
-                bingoLines++;
-                for(let i = 0; i < gridSize; i++) cellData[i * gridSize + (gridSize - 1 - i)].isBingoLine = true;
-            }
+            for(let i = 0; i < gridSize; i++) { if(!cellData[i * gridSize + (gridSize - 1 - i)].checked) { diag2Match = false; break; } }
+            if(diag2Match) { bingoLines++; for(let i = 0; i < gridSize; i++) cellData[i * gridSize + (gridSize - 1 - i)].isBingoLine = true; }
 
             if (shouldUpdateDOM) {
                 document.getElementById('bingo-lines-count').innerText = `${bingoLines} BINGO`;
+                
+                // [추가] 축포 로직: 빙고 개수가 증가했을 때만 발생
+                if (bingoLines > lastBingoCount) {
+                    confetti({
+                        particleCount: 150,
+                        spread: 70,
+                        origin: { y: 0.6 }
+                    });
+                }
+                lastBingoCount = bingoLines;
+
                 const cells = document.querySelectorAll('.bingo-cell');
                 cellData.forEach((c, idx) => {
                     if(c.isBingoLine) cells[idx].classList.add('line-completed');
@@ -652,20 +640,16 @@
 
         function generateRandomPool() {
             generatedPool = [];
-
             if(currentMode === 'alphabet') {
                 generatedPool = [...alphabetList].sort(() => Math.random() - 0.5);
                 document.getElementById('pool-output').innerText = generatedPool.join(' , ');
                 return;
             }
-
             let baseNumbers = [];
             for(let i = 1; i <= 100; i++) { baseNumbers.push(i); }
             baseNumbers.sort(() => Math.random() - 0.5);
-            
             const totalRequired = gridSize * gridSize;
             generatedPool = baseNumbers.slice(0, totalRequired);
-            
             const sortedView = [...generatedPool].sort((a,b) => a - b);
             document.getElementById('pool-output').innerText = sortedView.join(' , ');
         }
