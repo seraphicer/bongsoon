@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X LIVE STREAM DASHBOARD</title>
+    <style>
+        :root {
+            --bg-main: #0c0d19;
+            --panel-bg: rgba(18, 19, 38, 0.9);
+            --border-pink: #ff4a8d;
+            --text-white: #ffffff;
+            --text-muted: #7d819d;
+            
+            /* 플레이어별 고유 그라데이션 및 네온 컬러 */
+            --p1-color: #ff5b99;
+            --p1-grad: linear-gradient(90deg, #ff5b99, #ff2e70);
+            --p2-color: #9d77ff;
+            --p2-grad: linear-gradient(90deg, #9d77ff, #6b47ff);
+            --p3-color: #4adeff;
+            --p3-grad: linear-gradient(90deg, #4adeff, #1ca0ff);
+            --p4-color: #4affb4;
+            --p4-grad: linear-gradient(90deg, #4affb4, #10cf85);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Malgun Gothic', system-ui, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-white);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 15px;
+            overflow: hidden;
+        }
+
+        /* 최상단 헤더 영역 */
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 0 5px;
+        }
+
+        .title-area {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .dashboard-tag {
+            border: 1px solid var(--border-pink);
+            color: var(--border-pink);
+            padding: 1px 6px;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 10px;
+            width: fit-content;
+            text-transform: uppercase;
+        }
+
+        .main-title {
+            font-size: 19px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .bonus-setting-box {
+            background: rgba(255, 174, 0, 0.1);
+            border: 1px solid rgba(255, 174, 0, 0.3);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 11px;
+            color: #ffae00;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .input-bonus {
+            width: 32px;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #ffae00;
+            color: #ffae00;
+            font-size: 13px;
+            font-weight: bold;
+            text-align: center;
+            outline: none;
+        }
+
+        /* 메인 콘텐츠 분할 구조 */
+        .main-content {
+            display: flex;
+            gap: 15px;
+            flex: 1;
+            height: calc(100% - 55px);
+        }
+
+        /* 왼쪽: OBS STREAM OVERLAY (가로/세로 전면 축소 및 고정 슬림화) */
+        .overlay-container {
+            flex: 0.8;
+            max-width: 440px;
+            max-height: 480px; /* 세로가 과도하게 길어지는 것을 절대적으로 제한 */
+            border: 2px solid var(--border-pink);
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            background: rgba(12, 13, 25, 0.7);
+        }
+
+        .overlay-label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .overlay-label {
+            color: var(--border-pink);
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .on-air-badge {
+            background: rgba(255, 74, 141, 0.15);
+            color: var(--border-pink);
+            border: 1px solid var(--border-pink);
+            padding: 1px 6px;
+            font-size: 9px;
+            font-weight: bold;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .on-air-badge::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            background: var(--border-pink);
+            border-radius: 50%;
+        }
+
+        /* 플레이어 리스트 컴팩트 모드 */
+        .player-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px; /* 세로 마진 대폭 축소 */
+        }
+
+        .player-row {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            padding: 6px 12px; /* 위아래 패딩 최소화하여 세로 길이 압축 */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+        
+        .player-row::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 25%;
+            height: 50%;
+            width: 3px;
+            border-radius: 0 2px 2px 0;
+        }
+        #p1-row::before { background: var(--p1-color); }
+        #p2-row::before { background: var(--p2-color); }
+        #p3-row::before { background: var(--p3-color); }
+        #p4-row::before { background: var(--p4-color); }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 90px;
+        }
+
+        .p-tag {
+            font-size: 10px;
+            font-weight: bold;
+            width: 16px;
+        }
+        #p1-row .p-tag { color: var(--p1-color); }
+        #p2-row .p-tag { color: var(--p2-color); }
+        #p3-row .p-tag { color: var(--p3-color); }
+        #p4-row .p-tag { color: var(--p4-color); }
+
+        .p-name-details {
+            display: flex;
+            flex-direction: column;
+        }
+        .p-name {
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .p-sub-chicken {
+            font-size: 9px;
+            color: var(--text-muted);
+        }
+
+        /* 프로그레스 게이지 컴팩트 바 */
+        .progress-container {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            height: 6px; /* 두께도 슬림하게 변경 */
+            border-radius: 3px;
+            margin: 0 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+        #p1-row .progress-bar { background: var(--p1-grad); box-shadow: 0 0 6px rgba(255,91,153,0.3); }
+        #p2-row .progress-bar { background: var(--p2-grad); box-shadow: 0 0 6px rgba(157,119,255,0.3); }
+        #p3-row .progress-bar { background: var(--p3-grad); box-shadow: 0 0 6px rgba(74,222,255,0.3); }
+        #p4-row .progress-bar { background: var(--p4-grad); box-shadow: 0 0 6px rgba(74,255,180,0.3); }
+
+        .p-score {
+            font-size: 16px;
+            font-weight: 900;
+            width: 25px;
+            text-align: right;
+        }
+        #p1-row .p-score { color: var(--p1-color); }
+        #p2-row .p-score { color: var(--p2-color); }
+        #p3-row .p-score { color: var(--p3-color); }
+        #p4-row .p-score { color: var(--p4-color); }
+
+        /* ★ 하단 결과창 세로 절약 핵심: 2열 박스를 1열 가로 나열로 병합 */
+        .bottom-summary-zone {
+            display: flex;
+            gap: 8px; /* 양옆 배치 */
+            margin-top: auto;
+            border-top: 1px dashed rgba(255, 255, 255, 0.1);
+            padding-top: 10px;
+        }
+
+        .summary-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.04);
+            text-align: center;
+        }
+
+        .summary-title {
+            font-size: 10px;
+            font-weight: bold;
+            color: #ffae00;
+            margin-bottom: 2px;
+        }
+        .total-score-title { color: var(--border-pink); }
+
+        .summary-score {
+            font-size: 14px;
+            font-weight: 800;
+            color: #ffae00;
+        }
+        .total-score-value {
+            color: var(--border-pink);
+            font-size: 18px;
+        }
+
+
+        /* 오른쪽: ADMIN CONTROLLER 영역 (매니저 제어 패널) */
+        .admin-container {
+            flex: 1.2;
+            background: var(--panel-bg);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-main-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #a2a5b9;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 6px;
+        }
+        .btn-action {
+            background: #252841;
+            border: 1px solid #383c5e;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-action:hover { background: #323659; }
+        .btn-reset { border-color: #6340ff; color: #a594ff; }
+
+        .admin-sub-section {
+            border: 1px dashed rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 12px;
+            background: rgba(0,0,0,0.15);
+        }
+
+        .section-subtitle {
+            font-size: 11px;
+            color: #ffae00;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .kill-subtitle { color: #ff4a8d; }
+
+        .chicken-admin-board {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+        .chicken-count-display {
+            font-size: 22px;
+            font-weight: bold;
+            color: #ffae00;
+        }
+
+        .circle-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid #484d73;
+            background: #20233b;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .circle-btn:hover { background: #323659; }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+        th, td {
+            padding: 6px 4px;
+            font-size: 11px;
+        }
+        th {
+            color: var(--text-muted);
+            font-weight: normal;
+            padding-bottom: 6px;
+        }
+
+        .input-name {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: white;
+            font-weight: bold;
+            text-align: left;
+            border-bottom: 1px dashed #383c5e;
+            padding: 2px 0;
+            font-size: 12px;
+        }
+        .input-name:focus { outline: none; border-bottom-color: var(--border-pink); }
+
+        .input-kill {
+            width: 38px;
+            background: #191b30;
+            border: 1px solid #383c5e;
+            color: #ffcc00;
+            text-align: center;
+            padding: 4px 0;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-header">
+        <div class="title-area">
+            <div class="dashboard-tag">X Live Stream Dashboard</div>
+            <div class="main-title">🎮 4인 벽킬 챌린지 실시간 스코어</div>
+        </div>
+        <div class="bonus-setting-box">
+            <span>🍗 치킨 보너스 점수:</span>
+            <input type="number" id="bonus-score" class="input-bonus" value="5" oninput="calculateScores()">
+            <span>점</span>
+        </div>
+    </div>
+
+    <div class="main-content">
+        
+        <div class="overlay-container">
+            <div class="overlay-label-row">
+                <span class="overlay-label">OBS STREAM OVERLAY</span>
+                <span class="on-air-badge">ON AIR</span>
+            </div>
+
+            <div class="player-list">
+                <div class="player-row" id="p1-row">
+                    <div class="player-info">
+                        <span class="p-tag">P1</span>
+                        <div class="p-name-details">
+                            <span class="p-name" id="p1-name-txt">점니</span>
+                            <span class="p-sub-chicken">점수 연동됨</span>
+                        </div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="p1-bar"></div>
+                    </div>
+                    <span class="p-score" id="p1-total-kill">0</span>
+                </div>
+
+                <div class="player-row" id="p2-row">
+                    <div class="player-info">
+                        <span class="p-tag">P2</span>
+                        <div class="p-name-details">
+                            <span class="p-name" id="p2-name-txt">조은</span>
+                            <span class="p-sub-chicken">점수 연동됨</span>
+                        </div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="p2-bar"></div>
+                    </div>
+                    <span class="p-score" id="p2-total-kill">0</span>
+                </div>
+
+                <div class="player-row" id="p3-row">
+                    <div class="player-info">
+                        <span class="p-tag">P3</span>
+                        <div class="p-name-details">
+                            <span class="p-name" id="p3-name-txt">용태</span>
+                            <span class="p-sub-chicken">점수 연동됨</span>
+                        </div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="p3-bar"></div>
+                    </div>
+                    <span class="p-score" id="p3-total-kill">0</span>
+                </div>
+
+                <div class="player-row" id="p4-row">
+                    <div class="player-info">
+                        <span class="p-tag">P4</span>
+                        <div class="p-name-details">
+                            <span class="p-name" id="p4-name-txt">승곤</span>
+                            <span class="p-sub-chicken">점수 연동됨</span>
+                        </div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="p4-bar"></div>
+                    </div>
+                    <span class="p-score" id="p4-total-kill">0</span>
+                </div>
+            </div>
+
+            <div class="bottom-summary-zone">
+                <div class="summary-box">
+                    <span class="summary-title">🍗 팀 누적 치킨</span>
+                    <span class="summary-score" id="team-chicken-total">3회</span>
+                </div>
+                <div class="summary-box" style="background: rgba(255, 74, 141, 0.04);">
+                    <span class="summary-title total-score-title">⚙️ 팀 누적 총합 (보너스 포함)</span>
+                    <span class="summary-score total-score-value" id="team-grand-total">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-container">
+            <div class="admin-header">
+                <span class="admin-main-title">ADMIN CONTROLLER</span>
+                <div class="control-buttons">
+                    <button class="btn-action" onclick="addRound()">+ 라운드 추가</button>
+                    <button class="btn-action" onclick="deleteRound()">- 라운드 삭제</button>
+                    <button class="btn-action btn-reset" onclick="resetAll()">🔄 초기화</button>
+                </div>
+            </div>
+
+            <div class="admin-sub-section">
+                <div class="section-subtitle">🍗 실시간 치킨 횟수 입력</div>
+                <div class="chicken-admin-board">
+                    <button class="circle-btn" onclick="changeTeamChicken(-1)">-</button>
+                    <div class="chicken-count-display"><span id="team-chicken-val">3</span>회</div>
+                    <button class="circle-btn" onclick="changeTeamChicken(1)">+</button>
+                </div>
+            </div>
+
+            <div class="admin-sub-section">
+                <div class="section-subtitle kill-subtitle">⚔️ 라운드별 킬수 입력</div>
+                <div class="table-wrapper">
+                    <table id="score-table">
+                        <thead>
+                            <tr id="table-header">
+                                <th style="text-align: left; width: 100px;">참가자 이름</th>
+                                <th>1R</th>
+                                <th>2R</th>
+                                <th>3R</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr id="row-p1">
+                                <td><input type="text" class="input-name" value="점니" oninput="updateNames()"></td>
+                                <td><input type="number" class="input-kill" value="5" oninput="calculateScores()"></td>
+                                <td><input type="number" class="input-kill" value="4" oninput="calculateScores()"></td>
+                                <td><input type="number" class="input-kill" value="3" oninput="calculateScores()"></td>
+                            </tr>
+                            <tr id="row-p2">
+                                <td><input type="text" class="input-name" value="조은" oninput="updateNames()"></td>
+                                <td><input type="number" class="input-kill" value="3" oninput="calculateScores()"></td>
+                                <td><input type="number" class="input-kill" value="5" oninput="calculateScores()"></td>
+                                <td><input type="number" class="input-kill" value="4" oninput="calculateScores()"></td>
+                            </tr>
+                            <tr id="row-p3">
+                                <td><input type="text" class="input-name" value="용태" oninput="updateNames()"></td>
+                                <td><input type="number" class="input-kill" value="2" oninput="calculateScores()"></td>
+                                <td><input type="number" class="input-kill" value="6" oninput="calculateScores()"></td>
+                                <td><input type="number" class="input-kill" value="5" oninput="calculateScores()"></td>
+                            </tr>
+                            <tr id="row-p4">
+                                <td><input type="text" class="input-name" value="승곤" oninput="updateNames()"></td>
+                                <td><input type="number" class="input-kill" value="4" oninput="calculateScores()"></td>
+                                <td><input type="number" class="input-kill" value="4" oninput="calculateScores()"></td>
+                                <td><input type="number" class="input-kill" value="0" oninput="calculateScores()"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const state = {
+            teamChicken: 3, 
+            roundCount: 3,
+            maxVisualKill: 20
+        };
+
+        function updateNames() {
+            const p1 = document.querySelector('#row-p1 .input-name').value;
+            const p2 = document.querySelector('#row-p2 .input-name').value;
+            const p3 = document.querySelector('#row-p3 .input-name').value;
+            const p4 = document.querySelector('#row-p4 .input-name').value;
+
+            document.getElementById('p1-name-txt').innerText = p1;
+            document.getElementById('p2-name-txt').innerText = p2;
+            document.getElementById('p3-name-txt').innerText = p3;
+            document.getElementById('p4-name-txt').innerText = p4;
+        }
+
+        function changeTeamChicken(amount) {
+            state.teamChicken += amount;
+            if (state.teamChicken < 0) state.teamChicken = 0;
+            
+            document.getElementById('team-chicken-val').innerText = state.teamChicken;
+            document.getElementById('team-chicken-total').innerText = `${state.teamChicken}회`;
+            
+            calculateScores();
+        }
+
+        function addRound() {
+            state.roundCount++;
+            
+            const header = document.getElementById('table-header');
+            const th = document.createElement('th');
+            th.innerText = `${state.roundCount}R`;
+            header.appendChild(th);
+
+            ['p1', 'p2', 'p3', 'p4'].forEach(p => {
+                const row = document.getElementById(`row-${p}`);
+                const td = document.createElement('td');
+                td.innerHTML = `<input type="number" class="input-kill" value="0" oninput="calculateScores()">`;
+                row.appendChild(td);
+            });
+
+            calculateScores();
+        }
+
+        function deleteRound() {
+            if (state.roundCount <= 1) return;
+            
+            const header = document.getElementById('table-header');
+            header.removeChild(header.lastElementChild);
+
+            ['p1', 'p2', 'p3', 'p4'].forEach(p => {
+                const row = document.getElementById(`row-${p}`);
+                row.removeChild(row.lastElementChild);
+            });
+
+            state.roundCount--;
+            calculateScores();
+        }
+
+        function calculateScores() {
+            const players = ['p1', 'p2', 'p3', 'p4'];
+            let totalKillSum = 0;
+
+            players.forEach(p => {
+                const row = document.getElementById(`row-${p}`);
+                const killInputs = row.querySelectorAll('.input-kill');
+                let playerKillSum = 0;
+                
+                killInputs.forEach(input => {
+                    playerKillSum += parseInt(input.value) || 0;
+                });
+
+                document.getElementById(`${p}-total-kill`).innerText = playerKillSum;
+                totalKillSum += playerKillSum;
+
+                let fillPercent = (playerKillSum / state.maxVisualKill) * 100;
+                if (fillPercent > 100) fillPercent = 100;
+                document.getElementById(`${p}-bar`).style.width = `${fillPercent}%`;
+            });
+
+            const bonusWeight = parseInt(document.getElementById('bonus-score').value) || 0;
+            const totalBonusScore = state.teamChicken * bonusWeight;
+            const grandTotal = totalKillSum + totalBonusScore;
+
+            document.getElementById('team-grand-total').innerText = grandTotal;
+        }
+
+        function resetAll() {
+            if(!confirm("모든 데이터를 초기화하시겠습니까?")) return;
+
+            state.teamChicken = 0;
+            document.getElementById('team-chicken-val').innerText = 0;
+            document.getElementById('team-chicken-total').innerText = '0회';
+
+            const header = document.getElementById('table-header');
+            header.innerHTML = `<th style="text-align: left; width: 100px;">참가자 이름</th><th>1R</th><th>2R</th><th>3R</th>`;
+            
+            state.roundCount = 3;
+
+            document.getElementById('row-p1').innerHTML = `<td><input type="text" class="input-name" value="점니" oninput="updateNames()"></td><td><input type="number" class="input-kill" value="0" oninput="calculateScores()"></td><td><input type="number" class="input-kill" value="0" oninput="calculateScores()"></td><td><input type="number" class="input-kill" value="0" oninput="calculateScores()"></td>`;
+            document.getElementById('row-p2').innerHTML = `<td><input type="text" class="input-name" value="조은" oninput="updateNames()"></td><td><input type="number" class="input-kill" value="0" oninput="calculateScores()"></td><td><input type="number" class="input-kill" value="0" oninput="calculateScores()"></td><td><input type="number" class="input-kill" value="0" oninput="calculateScores()"></td>`;
+            document.getElementById('row-p3').innerHTML = `<td><input type="text" class="input-name" value="용태" oninput="updateNames()"></td><td><input type="number" class="input-kill" value="0" oninput="calculateScores()"></td><td><input type="number" class="input-kill" value="0" oninput="calculateScores()"></td><td><input type="number" class="input-kill" value="0" oninput="calculateScores()"></td>`;
+            document.getElementById('row-p4').innerHTML = `<td><input type="text" class="input-name" value="승곤" oninput="updateNames()"></td><td><input type="number" class="input-kill" value="0" oninput="calculateScores()"></td><td><input type="number" class="input-kill" value="0" oninput="calculateScores()"></td><td><input type="number" class="input-kill" value="0" oninput="calculateScores()"></td>`;
+
+            document.getElementById('bonus-score').value = 5;
+
+            updateNames();
+            calculateScores();
+        }
+
+        window.onload = function() {
+            updateNames();
+            calculateScores();
+		
+        }
+    </script>
+
+    </div>
+</body>
+</html>
