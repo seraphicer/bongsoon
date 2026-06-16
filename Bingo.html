@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>X LIVE BINGO DASHBOARD</title>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root {
             --bg-main: #0c0d19;
@@ -14,326 +13,62 @@
             --accent-yellow: #ffae00;
             --text-white: #ffffff;
             --text-muted: #7d819d;
-            
-            /* 클릭 시 변경될 배경색과 숫자 색상 */
             --cell-checked-bg: rgba(255, 74, 141, 0.25);
             --cell-checked-text: #ff4a8d;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Malgun Gothic', system-ui, sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Malgun Gothic', system-ui, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-white); min-height: 100vh; display: flex; flex-direction: column; padding: 20px; overflow-x: hidden; }
 
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-white);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            overflow-x: hidden;
-        }
+        .fade-in { animation: fadeInEffect 0.4s ease forwards; }
+        @keyframes fadeInEffect { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .fade-in {
-            animation: fadeInEffect 0.4s ease forwards;
-        }
-        @keyframes fadeInEffect {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px dashed rgba(255, 255, 255, 0.1); padding-bottom: 15px; }
+        .title-group .tag { border: 1px solid var(--accent-blue); color: var(--accent-blue); padding: 2px 8px; font-size: 11px; font-weight: bold; border-radius: 10px; width: fit-content; text-transform: uppercase; margin-bottom: 5px; }
+        .title-group h1 { font-size: 24px; font-weight: 900; letter-spacing: -0.5px; }
 
-        /* 헤더 영역 */
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
-            padding-bottom: 15px;
-        }
+        .mode-tabs { display: flex; gap: 8px; }
+        .tab-btn { background: #181932; border: 1px solid #383c5e; color: var(--text-muted); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .tab-btn:hover { border-color: var(--accent-blue); color: white; }
+        .tab-btn.active { background: var(--accent-blue); border-color: var(--accent-blue); color: #0c0d19; box-shadow: 0 0 15px rgba(74, 222, 255, 0.3); }
 
-        .title-group .tag {
-            border: 1px solid var(--accent-blue);
-            color: var(--accent-blue);
-            padding: 2px 8px;
-            font-size: 11px;
-            font-weight: bold;
-            border-radius: 10px;
-            width: fit-content;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
+        .main-dashboard { display: flex; gap: 20px; flex: 1; align-items: flex-start; }
 
-        .title-group h1 {
-            font-size: 24px;
-            font-weight: 900;
-            letter-spacing: -0.5px;
-        }
+        .overlay-container { flex: 0 0 320px; background: rgba(12, 13, 25, 0.8); border: 2px solid var(--border-pink); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 15px rgba(255, 74, 141, 0.1); min-height: 380px; }
+        
+        /* 축하 효과 컨테이너 */
+        #confetti-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 10; }
+        .confetti { position: absolute; width: 8px; height: 8px; background-color: var(--accent-yellow); animation: confetti-fall 1s ease-out forwards; }
+        @keyframes confetti-fall { 0% { transform: translateY(-10px) rotate(0deg); opacity: 1; } 100% { transform: translateY(300px) rotate(720deg); opacity: 0; } }
 
-        /* 모드 셀렉터 탭 */
-        .mode-tabs {
-            display: flex;
-            gap: 8px;
-        }
+        .overlay-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .overlay-label { color: var(--border-pink); font-size: 10px; font-weight: bold; letter-spacing: 0.5px; }
+        .status-badge { background: rgba(255, 74, 141, 0.1); color: var(--border-pink); border: 1px solid var(--border-pink); padding: 1px 5px; font-size: 8px; font-weight: bold; border-radius: 4px; }
 
-        .tab-btn {
-            background: #181932;
-            border: 1px solid #383c5e;
-            color: var(--text-muted);
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+        .bingo-grid { display: grid; gap: 5px; flex: 1; margin-bottom: 10px; }
+        .bingo-cell { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 6px; position: relative; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; cursor: pointer; aspect-ratio: 1 / 1; overflow: hidden; }
+        .cell-input { width: 100%; height: 100%; background: transparent; border: none; color: #ffffff; text-align: center; font-size: 18px; font-weight: 900; outline: none; pointer-events: none; cursor: pointer; }
+        .bingo-cell.editing { background: rgba(74, 222, 255, 0.2) !important; border-color: var(--accent-blue) !important; cursor: text; }
+        .bingo-cell.editing .cell-input { pointer-events: auto; color: var(--text-white) !important; }
+        .bingo-cell.checked { background: var(--cell-checked-bg) !important; border-color: var(--border-pink) !important; box-shadow: inset 0 0 10px rgba(255, 74, 141, 0.3); }
+        .bingo-cell.checked .cell-input { color: var(--cell-checked-text) !important; text-shadow: 0 0 8px rgba(255, 74, 141, 0.8); }
+        .bingo-cell.line-completed { background: rgba(255, 174, 0, 0.25) !important; border-color: var(--accent-yellow) !important; box-shadow: 0 0 10px rgba(255, 174, 0, 0.4), inset 0 0 8px rgba(255, 174, 0, 0.3) !important; }
+        .bingo-cell.line-completed .cell-input { color: var(--accent-yellow) !important; text-shadow: 0 0 10px rgba(255, 174, 0, 0.9) !important; }
 
-        .tab-btn:hover {
-            border-color: var(--accent-blue);
-            color: white;
-        }
+        .summary-zone { display: flex; gap: 6px; }
+        .sum-box { flex: 1; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 6px; text-align: center; }
+        .sum-box .title { font-size: 9px; color: var(--text-muted); font-weight: bold; }
+        .sum-box .value { font-size: 13px; font-weight: 900; }
+        .bingo-count-active { color: var(--accent-yellow); text-shadow: 0 0 6px rgba(255, 174, 0, 0.4); }
 
-        .tab-btn.active {
-            background: var(--accent-blue);
-            border-color: var(--accent-blue);
-            color: #0c0d19;
-            box-shadow: 0 0 15px rgba(74, 222, 255, 0.3);
-        }
-
-        /* 메인 레이아웃 */
-        .main-dashboard {
-            display: flex;
-            gap: 20px;
-            flex: 1;
-            align-items: flex-start;
-        }
-
-        /* 왼쪽: 스트림 오버레이 빙고판 초슬림화 (320px) */
-        .overlay-container {
-            flex: 0 0 320px;
-            background: rgba(12, 13, 25, 0.8);
-            border: 2px solid var(--border-pink);
-            border-radius: 10px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            box-shadow: 0 0 15px rgba(255, 74, 141, 0.1);
-            min-height: 380px;
-        }
-
-        .overlay-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .overlay-label {
-            color: var(--border-pink);
-            font-size: 10px;
-            font-weight: bold;
-            letter-spacing: 0.5px;
-        }
-
-        .status-badge {
-            background: rgba(255, 74, 141, 0.1);
-            color: var(--border-pink);
-            border: 1px solid var(--border-pink);
-            padding: 1px 5px;
-            font-size: 8px;
-            font-weight: bold;
-            border-radius: 4px;
-        }
-
-        /* 동적 빙고 그리드 시스템 */
-        .bingo-grid {
-            display: grid;
-            gap: 5px;
-            flex: 1;
-            margin-bottom: 10px;
-        }
-
-        .bingo-cell {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 6px;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            cursor: pointer;
-            aspect-ratio: 1 / 1;
-            overflow: hidden;
-        }
-
-        .bingo-cell:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-
-        /* 내부 입력창 텍스트 구조 */
-        .cell-input {
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            border: none;
-            color: #ffffff;
-            text-align: center;
-            font-size: 18px;
-            font-weight: 900;
-            outline: none;
-            padding: 0 !important;
-            line-height: 100%;
-            pointer-events: none;
-            cursor: pointer;
-        }
-
-        /* 더블 클릭하여 편집 모드가 활성화되었을 때의 스타일 */
-        .bingo-cell.editing {
-            background: rgba(74, 222, 255, 0.2) !important;
-            border-color: var(--accent-blue) !important;
-            cursor: text;
-        }
-        .bingo-cell.editing .cell-input {
-            pointer-events: auto;
-            color: var(--text-white) !important;
-            text-shadow: none !important;
-        }
-
-        /* 마우스 클릭으로 체크되었을 때 스타일 */
-        .bingo-cell.checked {
-            background: var(--cell-checked-bg) !important;
-            border-color: var(--border-pink) !important;
-            box-shadow: inset 0 0 10px rgba(255, 74, 141, 0.3);
-        }
-        .bingo-cell.checked .cell-input {
-            color: var(--cell-checked-text) !important;
-            text-shadow: 0 0 8px rgba(255, 74, 141, 0.8);
-        }
-
-        /* 빙고 완성 라인 하이라이트 효과 */
-        .bingo-cell.line-completed {
-            background: rgba(255, 174, 0, 0.25) !important;
-            border-color: var(--accent-yellow) !important;
-            box-shadow: 0 0 10px rgba(255, 174, 0, 0.4), inset 0 0 8px rgba(255, 174, 0, 0.3) !important;
-        }
-        .bingo-cell.line-completed .cell-input {
-            color: var(--accent-yellow) !important;
-            text-shadow: 0 0 10px rgba(255, 174, 0, 0.9) !important;
-        }
-
-        /* 하단 요약 스코어보드 존 */
-        .summary-zone {
-            display: flex;
-            gap: 6px;
-        }
-
-        .sum-box {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 4px;
-            padding: 6px;
-            text-align: center;
-        }
-
-        .sum-box .title {
-            font-size: 9px;
-            color: var(--text-muted);
-            margin-bottom: 1px;
-            font-weight: bold;
-        }
-
-        .sum-box .value {
-            font-size: 13px;
-            font-weight: 900;
-        }
-        .bingo-count-active {
-            color: var(--accent-yellow);
-            text-shadow: 0 0 6px rgba(255, 174, 0, 0.4);
-        }
-
-        /* 오른쪽: 컨트롤 패널 */
-        .control-container {
-            flex: 1;
-            background: var(--panel-bg);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .section-title {
-            font-size: 13px;
-            font-weight: bold;
-            color: var(--accent-blue);
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .ctrl-card {
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px dashed rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 12px;
-        }
-
-        .flex-row {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .btn {
-            flex: 1;
-            background: #20233b;
-            border: 1px solid #383c5e;
-            color: white;
-            padding: 8px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn:hover { background: #2f3357; }
-        .btn-primary {
-            background: var(--border-pink);
-            border-color: var(--border-pink);
-            color: white;
-        }
-        .btn-primary:hover { background: #e03b77; }
-
-        .random-pool-display {
-            background: #111224;
-            border: 1px solid #252846;
-            border-radius: 6px;
-            padding: 10px;
-            min-height: 60px;
-            font-size: 12px;
-            color: #ffcc00;
-            word-break: break-all;
-            line-height: 1.6;
-            font-weight: bold;
-            max-height: 120px;
-            overflow-y: auto;
-        }
-
-        .tip-box {
-            font-size: 11px;
-            color: var(--text-muted);
-            line-height: 1.5;
-            margin-top: 5px;
-        }
+        .control-container { flex: 1; background: var(--panel-bg); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .section-title { font-size: 13px; font-weight: bold; color: var(--accent-blue); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .ctrl-card { background: rgba(0, 0, 0, 0.2); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 12px; }
+        .flex-row { display: flex; gap: 8px; margin-top: 8px; }
+        .btn { flex: 1; background: #20233b; border: 1px solid #383c5e; color: white; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .btn-primary { background: var(--border-pink); border-color: var(--border-pink); }
+        .random-pool-display { background: #111224; border: 1px solid #252846; border-radius: 6px; padding: 10px; font-size: 12px; color: #ffcc00; word-break: break-all; font-weight: bold; max-height: 120px; overflow-y: auto; }
+        .tip-box { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -341,9 +76,8 @@
     <div class="header-container">
         <div class="title-group">
             <div class="tag">TOOL BOX BINGO SYSTEM</div>
-            <h1>🎯 스트리머 맞춤형 실시간 빙고판</h1>
+            <h1>🎯 봉순이 빙고판</h1>
         </div>
-        
         <div class="mode-tabs">
             <button class="tab-btn active" onclick="switchMode('4x4')">4X4 빙고</button>
             <button class="tab-btn" onclick="switchMode('5x5')">5X5 빙고</button>
@@ -351,20 +85,15 @@
             <button class="tab-btn" onclick="switchMode('alphabet')">알파벳(5X5)</button>
         </div>
     </div>
-    <div class="manager-badge" style="background: rgba(255, 174, 0, 0.1); border: 1px solid var(--accent-yellow); color: var(--accent-black); padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 6px; width: fit-content; margin-bottom: 5px;">
-         <div class="manager-badge">📣 스트리머 전용</div>
-         </div>
-         </br>
+
     <div class="main-dashboard">
-        
         <div class="overlay-container fade-in" id="bingo-overlay">
+            <div id="confetti-container"></div>
             <div class="overlay-header">
                 <span class="overlay-label" id="current-board-title">4X4 BINGO OVERLAY</span>
                 <span class="status-badge">LIVE MATCHING</span>
             </div>
-
             <div class="bingo-grid" id="grid-element"></div>
-
             <div class="summary-zone">
                 <div class="sum-box">
                     <div class="title">✅ 체크 칸 수</div>
@@ -372,293 +101,138 @@
                 </div>
                 <div class="sum-box" style="border-color: rgba(255,174,0,0.3);">
                     <div class="title" style="color: var(--accent-yellow);">🔥 완성 라인</div>
-                    <div class="value bingo-count-active" id="bingo-lines-count">0 BINGO</div>
+                    <div class="value bingo-count-active" id="bingo-lines-count" data-prev="0">0 BINGO</div>
                 </div>
             </div>
         </div>
 
         <div class="control-container">
-        <div class="manager-badge" style="background: rgba(255, 174, 0, 0.1); border: 1px solid var(--accent-yellow); color: var(--accent-yellow); padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 6px; width: fit-content; margin-bottom: 5px;">
-         <div class="manager-badge">📣 매니저 전용</div>
-         </div>
             <div>
                 <div class="section-title" id="system-title-node">🎲 랜덤 숫자 조합표 시스템 (1~100 지정 완료)</div>
                 <div class="ctrl-card">
-                    <p class="tip-box" style="margin-bottom: 8px; color: #ffae00;" id="system-tip-node">
-                        ※ 1부터 100까지의 난수 풀에서 중복 없이 추출하여 엑셀 시트와 동일하게 배치합니다.
-                    </p>
-                    <div class="random-pool-display" id="pool-output">
-                        조합표를 생성해 주세요.
-                    </div>
+                    <p class="tip-box" style="margin-bottom: 8px; color: #ffae00;" id="system-tip-node">※ 1부터 100까지의 난수 풀에서 중복 없이 추출합니다.</p>
+                    <div class="random-pool-display" id="pool-output">조합표를 생성해 주세요.</div>
                     <div class="flex-row">
                         <button class="btn" onclick="generateRandomPool()">🔄 난수 조합 셔플</button>
                         <button class="btn btn-primary" onclick="autoFillBoard()">⚡ 빙고판 자동 채우기</button>
                     </div>
                 </div>
             </div>
-
             <div>
                 <div class="section-title">⚙️ 보드 관리 콘솔</div>
                 <div class="ctrl-card">
-                    <p class="tip-box" style="margin-bottom: 10px;">
+				<p class="tip-box" style="margin-bottom: 10px;">
                         💡 <strong>실시간 마우스 인터랙션 안내:</strong><br>
                         * 칸을 <strong>한 번 클릭</strong>하면 핑크색 색상이 활성화(체크 토글)됩니다.<br>
                         * 칸을 <strong>두 번 빠르게 클릭(더블클릭)</strong>하면 파란색 편집창으로 변경되며 숫자를 직접 바꿀 수 있습니다.<br>
                         (글자 입력을 마치고 <u>엔터(Enter)를 누르거나 다른 곳을 클릭</u>하면 변경이 완료됩니다.)
                     </p>
+                    <p class="tip-box">💡 한 번 클릭: 체크 / 더블 클릭: 텍스트 편집</p>
                     <div class="flex-row">
-                        <button class="btn" style="border-color: #6340ff; color:#a594ff;" onclick="resetChecks()">🧹 체크 상태만 초기화</button>
-                        <button class="btn" style="border-color: #ff4a8d; color:#ff4a8d;" onclick="clearAllData()">⚠️ 판 전체 완전 리셋</button>
+                        <button class="btn" onclick="resetChecks()">🧹 체크 초기화</button>
+                        <button class="btn" style="border-color: #ff4a8d; color:#ff4a8d;" onclick="clearAllData()">⚠️ 전체 리셋</button>
                     </div>
-                </div>
-            </div>
-
-            <div style="margin-top: auto;">
-                <div class="ctrl-card" style="background: rgba(74, 222, 255, 0.03); border-color: rgba(74,222,255,0.15);">
-                    <div class="section-title" style="color: var(--accent-blue); margin-bottom: 4px;">💡 방송 크롭 팁</div>
-                    <p class="tip-box" style="color: #a2a5b9;">
-                        OBS Studio 소스 목록에서 '브라우저 소스'로 추가하거나 전체 화면 캡처 후 <strong>왼쪽 핑크색 테두리 영역(overlay-container)</strong>만 Alt 키를 누른 채 드래그하여 자르면 투명하고 멋진 오버레이 디자인으로 송출할 수 있습니다.
-                    </p>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let currentMode = '4x4';
-        let gridSize = 4;
-        let cellData = []; 
-        let generatedPool = [];
-        let clickTimer = null;
-        let lastBingoCount = 0; // 축포 트리거를 위해 이전 빙고 상태 저장
-
+        let currentMode = '4x4', gridSize = 4, cellData = [], generatedPool = [], clickTimer = null;
         const alphabetList = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V/W','X','Y','Z'];
 
-        window.onload = function() {
-            switchMode('4x4');
-        };
+        window.onload = () => switchMode('4x4');
 
         function switchMode(mode) {
             currentMode = mode;
-            
-            const tabs = document.querySelectorAll('.tab-btn');
-            tabs.forEach(btn => btn.classList.remove('active'));
-            
-            let btnIndex = 0;
-            if(mode === '5x5') btnIndex = 1;
-            if(mode === '6x6') btnIndex = 2;
-            if(mode === 'alphabet') btnIndex = 3;
-            tabs[btnIndex].classList.add('active');
-
-            const titleEl = document.getElementById('current-board-title');
-            const systemTitleEl = document.getElementById('system-title-node');
-            const systemTipEl = document.getElementById('system-tip-node');
-
-            if(mode === '4x4') { 
-                gridSize = 4; 
-                titleEl.innerText = "4X4 BINGO OVERLAY";
-                systemTitleEl.innerText = "🎲 랜덤 숫자 조합표 시스템 (1~100 지정 완료)";
-                systemTipEl.innerText = "※ 1부터 100까지의 난수 풀에서 중복 없이 추출하여 엑셀 시트와 동일하게 배치합니다.";
-            }
-            if(mode === '5x5') { 
-                gridSize = 5; 
-                titleEl.innerText = "5X5 BINGO OVERLAY";
-                systemTitleEl.innerText = "🎲 랜덤 숫자 조합표 시스템 (1~100 지정 완료)";
-                systemTipEl.innerText = "※ 1부터 100까지의 난수 풀에서 중복 없이 추출하여 엑셀 시트와 동일하게 배치합니다.";
-            }
-            if(mode === '6x6') { 
-                gridSize = 6; 
-                titleEl.innerText = "6X6 BINGO OVERLAY";
-                systemTitleEl.innerText = "🎲 랜덤 숫자 조합표 시스템 (1~100 지정 완료)";
-                systemTipEl.innerText = "※ 1부터 100까지의 난수 풀에서 중복 없이 추출하여 엑셀 시트와 동일하게 배치합니다.";
-            }
-            if(mode === 'alphabet') { 
-                gridSize = 5; 
-                titleEl.innerText = "5X5 ALPHABET BINGO";
-                systemTitleEl.innerText = "Test";
-                systemTipEl.innerText = "※ 알파벳 리스트 순서를 무작위로 셔플하여 랜덤 배치 보드를 구성합니다.";
-            }
-
-            const gridEl = document.getElementById('grid-element');
-            gridEl.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
-            
-            lastBingoCount = 0; // 모드 변경 시 초기화
+            document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', (mode === '4x4' && i===0) || (mode === '5x5' && i===1) || (mode === '6x6' && i===2) || (mode === 'alphabet' && i===3));
+            });
+            gridSize = (mode === '4x4') ? 4 : (mode === 'alphabet' ? 5 : parseInt(mode[0]));
+            document.getElementById('current-board-title').innerText = `${mode.toUpperCase()} BINGO`;
+            document.getElementById('system-title-node').innerText = (mode === 'alphabet') ? "Test" : "🎲 랜덤 숫자 조합표 시스템";
+            document.getElementById('grid-element').style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
             clearAllData();
             generateRandomPool();
         }
 
         function clearAllData() {
-            cellData = [];
-            lastBingoCount = 0;
-            const totalCells = gridSize * gridSize;
-
-            for(let i = 0; i < totalCells; i++) {
-                let defaultVal = i + 1;
-                if(currentMode === 'alphabet') {
-                    defaultVal = alphabetList[i] || '';
-                }
-                cellData.push({
-                    id: i,
-                    value: defaultVal,
-                    checked: false,
-                    isBingoLine: false
-                });
-            }
+            cellData = Array.from({length: gridSize * gridSize}, (_, i) => ({
+                id: i, value: (currentMode === 'alphabet' ? alphabetList[i] : i + 1), checked: false, isBingoLine: false
+            }));
+            document.getElementById('bingo-lines-count').dataset.prev = 0;
             renderBoard();
         }
 
-        function resetChecks() {
-            cellData.forEach(cell => {
-                cell.checked = false;
-                cell.isBingoLine = false;
-            });
-            lastBingoCount = 0;
-            renderBoard();
-        }
+        function resetChecks() { cellData.forEach(c => c.checked = c.isBingoLine = false); renderBoard(); }
 
         function renderBoard() {
             const gridEl = document.getElementById('grid-element');
             gridEl.innerHTML = '';
-
             cellData.forEach((cell, idx) => {
-                const cellBox = document.createElement('div');
-                cellBox.className = 'bingo-cell';
-                if(cell.checked) cellBox.classList.add('checked');
-                if(cell.isBingoLine) cellBox.classList.add('line-completed');
-
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.className = 'cell-input';
-                input.value = cell.value;
-                
-                input.addEventListener('input', (e) => {
-                    cellData[idx].value = e.target.value;
-                    calculateBingo(false); 
-                });
-
-                input.addEventListener('keydown', (e) => {
-                    if(e.key === 'Enter') {
-                        input.blur();
-                    }
-                });
-
-                input.addEventListener('blur', () => {
-                    cellBox.classList.remove('editing');
-                    renderBoard();
-                });
-
-                // 한 번 클릭 판정
-                cellBox.addEventListener('click', (e) => {
-                    if (cellBox.classList.contains('editing')) return;
-
-                    if (!clickTimer) {
-                        clickTimer = setTimeout(() => {
-                            clickTimer = null;
-                            toggleCell(idx);
-                        }, 250);
-                    }
-                });
-
-                // 더블 클릭 판정
-                cellBox.addEventListener('dblclick', (e) => {
-                    e.stopPropagation();
-                    if (clickTimer) {
-                        clearTimeout(clickTimer);
-                        clickTimer = null;
-                    }
-                    
-                    cellBox.classList.add('editing');
-                    input.focus();
-                    input.select();
-                });
-
-                cellBox.appendChild(input);
-                gridEl.appendChild(cellBox);
+                const div = document.createElement('div');
+                div.className = `bingo-cell ${cell.checked ? 'checked' : ''} ${cell.isBingoLine ? 'line-completed' : ''}`;
+                div.innerHTML = `<input type="text" class="cell-input" value="${cell.value}">`;
+                div.querySelector('input').oninput = (e) => cellData[idx].value = e.target.value;
+                div.querySelector('input').onblur = () => { div.classList.remove('editing'); renderBoard(); };
+                div.onclick = (e) => { if(!div.classList.contains('editing')) { clearTimeout(clickTimer); clickTimer = setTimeout(() => { cellData[idx].checked = !cellData[idx].checked; renderBoard(); }, 250); } };
+                div.ondblclick = (e) => { clearTimeout(clickTimer); div.classList.add('editing'); div.querySelector('input').focus(); };
+                gridEl.appendChild(div);
             });
-
             calculateBingo(true);
         }
 
-        function toggleCell(index) {
-            cellData[index].checked = !cellData[index].checked;
-            renderBoard();
-        }
-
-        function calculateBingo(shouldUpdateDOM = true) {
-            let checkedCount = 0;
-            cellData.forEach(c => { if(c.checked) checkedCount++; });
-            
-            if (shouldUpdateDOM) {
-                document.getElementById('checked-cells-count').innerText = `${checkedCount} / ${gridSize * gridSize}`;
-            }
-
+        function calculateBingo(updateDOM) {
             cellData.forEach(c => c.isBingoLine = false);
             let bingoLines = 0;
+            const checkLine = (indices) => { if(indices.every(i => cellData[i].checked)) { bingoLines++; indices.forEach(i => cellData[i].isBingoLine = true); } };
+            for(let i=0; i<gridSize; i++) {
+                checkLine(Array.from({length: gridSize}, (_, j) => i*gridSize + j));
+                checkLine(Array.from({length: gridSize}, (_, j) => j*gridSize + i));
+            }
+            checkLine(Array.from({length: gridSize}, (_, i) => i*gridSize + i));
+            checkLine(Array.from({length: gridSize}, (_, i) => i*gridSize + (gridSize-1-i)));
             
-            // 가로, 세로, 대각선 검사 로직 동일...
-            for(let r = 0; r < gridSize; r++) {
-                let rowMatch = true;
-                for(let c = 0; c < gridSize; c++) {
-                    if(!cellData[r * gridSize + c].checked) { rowMatch = false; break; }
+            if(updateDOM) {
+                const prev = parseInt(document.getElementById('bingo-lines-count').dataset.prev);
+                // 라인이 완성될 때마다 (0에서 1이 될 때 포함) 축하 효과 발생
+                if(bingoLines > prev) {
+                    triggerConfetti();
                 }
-                if(rowMatch) { bingoLines++; for(let c = 0; c < gridSize; c++) cellData[r * gridSize + c].isBingoLine = true; }
-            }
-            for(let c = 0; c < gridSize; c++) {
-                let colMatch = true;
-                for(let r = 0; r < gridSize; r++) {
-                    if(!cellData[r * gridSize + c].checked) { colMatch = false; break; }
-                }
-                if(colMatch) { bingoLines++; for(let r = 0; r < gridSize; r++) cellData[r * gridSize + c].isBingoLine = true; }
-            }
-            let diag1Match = true;
-            for(let i = 0; i < gridSize; i++) { if(!cellData[i * gridSize + i].checked) { diag1Match = false; break; } }
-            if(diag1Match) { bingoLines++; for(let i = 0; i < gridSize; i++) cellData[i * gridSize + i].isBingoLine = true; }
-            let diag2Match = true;
-            for(let i = 0; i < gridSize; i++) { if(!cellData[i * gridSize + (gridSize - 1 - i)].checked) { diag2Match = false; break; } }
-            if(diag2Match) { bingoLines++; for(let i = 0; i < gridSize; i++) cellData[i * gridSize + (gridSize - 1 - i)].isBingoLine = true; }
-
-            if (shouldUpdateDOM) {
+                document.getElementById('bingo-lines-count').dataset.prev = bingoLines;
+                document.getElementById('checked-cells-count').innerText = `${cellData.filter(c=>c.checked).length} / ${gridSize*gridSize}`;
                 document.getElementById('bingo-lines-count').innerText = `${bingoLines} BINGO`;
-                
-                // [추가] 축포 로직: 빙고 개수가 증가했을 때만 발생
-                if (bingoLines > lastBingoCount) {
-                    confetti({
-                        particleCount: 150,
-                        spread: 70,
-                        origin: { y: 0.6 }
-                    });
-                }
-                lastBingoCount = bingoLines;
-
-                const cells = document.querySelectorAll('.bingo-cell');
-                cellData.forEach((c, idx) => {
-                    if(c.isBingoLine) cells[idx].classList.add('line-completed');
-                    else cells[idx].classList.remove('line-completed');
-                });
+                renderBoardClasses();
             }
+        }
+
+        function renderBoardClasses() {
+            document.querySelectorAll('.bingo-cell').forEach((el, i) => {
+                el.className = `bingo-cell ${cellData[i].checked ? 'checked' : ''} ${cellData[i].isBingoLine ? 'line-completed' : ''}`;
+            });
+        }
+
+        function triggerConfetti() {
+            const container = document.getElementById('confetti-container');
+            for (let i = 0; i < 40; i++) {
+                const div = document.createElement('div');
+                div.className = 'confetti';
+                div.style.left = Math.random() * 100 + '%';
+                div.style.animationDelay = Math.random() * 0.5 + 's';
+                div.style.backgroundColor = ['#ff4a8d', '#4adeff', '#ffae00'][Math.floor(Math.random() * 3)];
+                container.appendChild(div);
+            }
+            setTimeout(() => container.innerHTML = '', 1500);
         }
 
         function generateRandomPool() {
-            generatedPool = [];
-            if(currentMode === 'alphabet') {
-                generatedPool = [...alphabetList].sort(() => Math.random() - 0.5);
-                document.getElementById('pool-output').innerText = generatedPool.join(' , ');
-                return;
-            }
-            let baseNumbers = [];
-            for(let i = 1; i <= 100; i++) { baseNumbers.push(i); }
-            baseNumbers.sort(() => Math.random() - 0.5);
-            const totalRequired = gridSize * gridSize;
-            generatedPool = baseNumbers.slice(0, totalRequired);
-            const sortedView = [...generatedPool].sort((a,b) => a - b);
-            document.getElementById('pool-output').innerText = sortedView.join(' , ');
+            generatedPool = (currentMode === 'alphabet') ? [...alphabetList].sort(()=>Math.random()-0.5) : Array.from({length:100},(_,i)=>i+1).sort(()=>Math.random()-0.5).slice(0, gridSize*gridSize);
+            document.getElementById('pool-output').innerText = generatedPool.join(' , ');
         }
 
         function autoFillBoard() {
             if(generatedPool.length === 0) generateRandomPool();
-            cellData.forEach((cell, idx) => {
-                if(generatedPool[idx] !== undefined) { cell.value = generatedPool[idx]; }
-            });
+            cellData.forEach((cell, i) => cell.value = generatedPool[i] || cell.value);
             renderBoard();
         }
     </script>
