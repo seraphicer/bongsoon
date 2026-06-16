@@ -425,16 +425,22 @@
             <div class="dashboard-tag">X Live Stream Dashboard</div>
             <div class="main-title">🎮 4인 벽킬 챌린지 실시간 스코어</div>
         </div>
+		
         <div class="bonus-setting-box">
+		
             <span>🍗 치킨 보너스 점수:</span>
             <input type="number" id="bonus-score" class="input-bonus" value="5" oninput="calculateScores()">
             <span>점</span>
         </div>
     </div>
-
+<div class="manager-badge" style="background: rgba(255, 174, 0, 0.1); border: 1px solid var(--accent-yellow); color: var(--accent-black); padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 6px; width: fit-content; margin-bottom: 5px;">
+		 <div class="manager-badge">📣 스트리머 전용</div>
+		 </div>
+		 </br>
     <div class="main-content">
         
         <div class="overlay-container">
+		
             <div class="overlay-label-row">
                 <span class="overlay-label">OBS STREAM OVERLAY</span>
                 <span class="on-air-badge">ON AIR</span>
@@ -511,8 +517,11 @@
         </div>
 
         <div class="admin-container">
+		
             <div class="admin-header">
-                <span class="admin-main-title">ADMIN CONTROLLER</span>
+               <div class="manager-badge" style="background: rgba(255, 174, 0, 0.1); border: 1px solid var(--accent-yellow); color: var(--accent-yellow); padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 6px; width: fit-content; margin-bottom: 5px;">
+		 <div class="manager-badge">📣 매니저 전용</div>
+		 </div>
                 <div class="control-buttons">
                     <button class="btn-action" onclick="addRound()">+ 라운드 추가</button>
                     <button class="btn-action" onclick="deleteRound()">- 라운드 삭제</button>
